@@ -14,11 +14,12 @@
         android:textSize="16sp"
         android:layout_alignParentRight="true"
         android:paddingRight="5dp"
+        android:background="#fff"
         />
 
 
     <Space
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_toLeftOf="@id/message"
         />
