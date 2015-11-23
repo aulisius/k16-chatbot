@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">K16</string>
+    <string name="placeholder">Your message here</string>
 </resources>

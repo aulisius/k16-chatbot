@@ -1,8 +1,5 @@
 package com.kurukshetra.k16;
 
-/**
- * Created by Faizaan on 22-11-2015.
- */
 public class Message {
 	private String type;
 	private String message;

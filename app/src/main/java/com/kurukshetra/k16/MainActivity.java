@@ -2,23 +2,27 @@ package com.kurukshetra.k16;
 
 import android.content.Context;
 import android.database.DataSetObserver;
-import android.net.Uri;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.EditText;
-import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -26,6 +30,8 @@ public class MainActivity extends AppCompatActivity {
 	ChatAdapter chatAdapter;
 	ListView mListView;
 	HashMap<String, String[]> stringHashMap;
+	JSONObject eventJSON;
+	HashMap<String, String> queryType;
 
 	@Override
 	protected void onCreate (Bundle savedInstanceState) {
@@ -33,8 +39,24 @@ public class MainActivity extends AppCompatActivity {
 		setContentView (R.layout.activity_main);
 
 		stringHashMap = new HashMap<> ();
+		queryType = new HashMap<> () ;
 		arrayList = new ArrayList<> ();
 
+		initJSONFile ();
+
+		//JSONObject json  = new JSONObject ()
+		String[] helpStrings = new String[] {
+				"Hey! This is DexBot here to help you!\n You can use these commands to communicate with me\n",
+				"when is ___? - e.g. coding\n",
+				"about __? - e.g. Events\n",
+				"help - To see this help message\n"
+		};
+
+		queryType.put ("help", "help");
+		queryType.put ("about", "description");
+		queryType.put ("when", "time");
+
+/*
 		String[] eventStrings = new String[] {
 				"Engineering",
 				"Robotics",
@@ -45,14 +67,7 @@ public class MainActivity extends AppCompatActivity {
 				"General"
 		};
 
-		String[] helpStrings = new String[] {
-				"Hey! This is DexBot here to help you!\n You can use these commands to communicate with me",
-				"when is ___? - To know when some event will occur e.g. coding",
-				"what are __? - To know about something e.g. Events",
-				"help - To see this help message"
-		};
-
-		stringHashMap.put ("events", eventStrings);
+		stringHashMap.put ("events", eventStrings); */
 		stringHashMap.put ("help", helpStrings);
 
 		String[] temp = stringHashMap.get ("help");
@@ -71,6 +86,33 @@ public class MainActivity extends AppCompatActivity {
 		mListView.setAdapter (chatAdapter);
 	}
 
+	public void initJSONFile() {
+		try {
+			InputStream is = getAssets ().open ("events.json");
+			BufferedReader br = new BufferedReader (new InputStreamReader (is));
+			StringBuilder str = new StringBuilder ();
+			String st = "";
+			while((st = br.readLine ()) != null) {
+				str.append (st);
+			}
+			JSONObject js = new JSONObject (str.toString ());
+			JSONArray jsonArray = js.getJSONArray ("events");
+
+			String[] categories = new String[jsonArray.length ()];
+			for(int i = 0; i < jsonArray.length (); i++ ) {
+				categories[i] = jsonArray.getJSONObject (i).getString ("name");
+			}
+
+			stringHashMap.put ("events", categories);
+		}
+		catch(IOException ie) {
+			Log.d ("JSONFile", "Read error");
+		}
+		catch (JSONException je) {
+			Log.d ("JSONArray", "Malformed JSON");
+		}
+
+	}
 	public void addChatMessage (View v) {
 		EditText editText = (EditText) findViewById (R.id.new_msg);
 
@@ -90,29 +132,40 @@ public class MainActivity extends AppCompatActivity {
 
 		Message botReply = new Message ();
 		botReply.setType ("bot");
-
-		String mesg = "";
-		if (msg.toLowerCase ().matches ("what(.*)")) {
-			if(msg.toLowerCase().matches ("(.*)events(.*)")) {
-				String[] wordParts = stringHashMap.get ("events");
-				for(String i : wordParts) mesg = mesg + "\n" + i;
-			}
-		}
-		else if(msg.toLowerCase ().matches ("(.*)help(.*)")) {
-			String[] wordParts = stringHashMap.get ("help");
-
-			for(String i : wordParts) mesg = mesg + "\n" + i;
-		}
-		else mesg = "Please see 'help' to see the list of commands";
-
-		botReply.setMessage (mesg);
-
+		botReply.setMessage ( parseMessage (msg) );
 		arrayList.add (botReply);
 
 		chatAdapter = new ChatAdapter (getApplicationContext (), arrayList);
 		mListView.setAdapter (chatAdapter);
 	}
 
+	public String parseMessage(String message) {
+
+		String mesg = "";
+
+		message = message.toLowerCase ();
+
+		String[] messageParts = message.split ("\\s+");
+
+		//String
+
+
+		if (message.matches ("about(.*)")) {
+			if(message.matches ("(.*)events(.*)")) {
+				String[] wordParts = stringHashMap.get ("events");
+				for(String i : wordParts) mesg = mesg + "\n" + i;
+			}
+		}
+		else if(message.matches ("help(.*)")) {
+			String[] wordParts = stringHashMap.get ("help");
+
+			for(String i : wordParts) mesg = mesg + "\n" + i;
+		}
+		else mesg = "Please see 'help' to see the list of commands";
+
+
+		return mesg;
+	}
 }
 
 
