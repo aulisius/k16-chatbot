@@ -4,6 +4,7 @@ import android.content.Context;
 import android.database.DataSetObserver;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.text.Html;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -46,28 +47,16 @@ public class MainActivity extends AppCompatActivity {
 
 		//JSONObject json  = new JSONObject ()
 		String[] helpStrings = new String[] {
-				"Hey! This is DexBot here to help you!\n You can use these commands to communicate with me\n",
-				"when is ___? - e.g. coding\n",
-				"about __? - e.g. Events\n",
-				"help - To see this help message\n"
+				"Hey! This is DexBot here to help you! <br/> You can use these commands to communicate with me<br/>",
+				"when is ___? - e.g. coding<br/>",
+				"about __? - e.g. Events <br/>",
+				"help - To see this help message <br/>"
 		};
 
 		queryType.put ("help", "help");
 		queryType.put ("about", "description");
 		queryType.put ("when", "time");
 
-/*
-		String[] eventStrings = new String[] {
-				"Engineering",
-				"Robotics",
-				"Quizzes",
-				"Management",
-				"Coding",
-				"Online",
-				"General"
-		};
-
-		stringHashMap.put ("events", eventStrings); */
 		stringHashMap.put ("help", helpStrings);
 
 		String[] temp = stringHashMap.get ("help");
@@ -87,6 +76,7 @@ public class MainActivity extends AppCompatActivity {
 	}
 
 	public void initJSONFile() {
+
 		try {
 			InputStream is = getAssets ().open ("events.json");
 			BufferedReader br = new BufferedReader (new InputStreamReader (is));
@@ -96,11 +86,36 @@ public class MainActivity extends AppCompatActivity {
 				str.append (st);
 			}
 			JSONObject js = new JSONObject (str.toString ());
-			JSONArray jsonArray = js.getJSONArray ("events");
+			JSONArray categoryJSONArray = js.getJSONArray ("events");
 
-			String[] categories = new String[jsonArray.length ()];
-			for(int i = 0; i < jsonArray.length (); i++ ) {
-				categories[i] = jsonArray.getJSONObject (i).getString ("name");
+			String[] categories = new String[categoryJSONArray.length ()];
+			for(int i = 0; i < categoryJSONArray.length (); i++ ) {
+				categories[i] = categoryJSONArray.getJSONObject (i).getString ("name");
+			}
+
+
+			for(int i = 0; i < categoryJSONArray.length (); i++) {
+
+				JSONArray tempArray = categoryJSONArray.getJSONObject (i).getJSONArray ("events");
+				ArrayList<String> eventNameList = new ArrayList<> ();
+
+				for(int j = 0; j < tempArray.length (); j++) {
+
+
+					JSONObject tempObject = tempArray.getJSONObject (j);
+					String key = tempObject.getString ("name").toLowerCase ();
+
+					JSONArray tabs = tempObject.getJSONArray ("tabs");
+
+					for(int k = 1; k < tabs.length (); k++) {
+						eventNameList.add (tabs.getJSONObject (k).getString ("title"));
+						eventNameList.add (tabs.getJSONObject (k).getString ("content"));
+					}
+
+					String[] description = new String[eventNameList.size ()];
+					eventNameList.toArray (description);
+					stringHashMap.put (key, description);
+				}
 			}
 
 			stringHashMap.put ("events", categories);
@@ -141,28 +156,26 @@ public class MainActivity extends AppCompatActivity {
 
 	public String parseMessage(String message) {
 
-		String mesg = "";
+		String mesg = "Please see 'help' to see the list of commands";
 
 		message = message.toLowerCase ();
 
-		String[] messageParts = message.split ("\\s+");
+		String messageType = message.split ("\\s+")[0];
 
-		//String
-
+		String messageBody = message.substring (messageType.length ()).toLowerCase ().trim ();
 
 		if (message.matches ("about(.*)")) {
-			if(message.matches ("(.*)events(.*)")) {
-				String[] wordParts = stringHashMap.get ("events");
-				for(String i : wordParts) mesg = mesg + "\n" + i;
+			if(stringHashMap.get (messageType) != null) {
+				mesg = "";
+				String[] wordParts = stringHashMap.get (messageBody);
+				for(String i : wordParts) mesg = mesg + "<br/>" + i;
 			}
 		}
 		else if(message.matches ("help(.*)")) {
 			String[] wordParts = stringHashMap.get ("help");
-
-			for(String i : wordParts) mesg = mesg + "\n" + i;
+			mesg = "";
+			for(String i : wordParts) mesg = mesg + i;
 		}
-		else mesg = "Please see 'help' to see the list of commands";
-
 
 		return mesg;
 	}
@@ -227,13 +240,13 @@ class ChatAdapter extends BaseAdapter {
 
 		View rView;
 		if(chatData.get (position).getType ().equals ("user"))
-			rView = layoutInflater.inflate (R.layout.user_message, null);
+			rView = layoutInflater.inflate (R.layout.message, null);
 		else
-			rView = layoutInflater.inflate (R.layout.bot_reply, null);
+			rView = layoutInflater.inflate (R.layout.reply, null);
 
 		TextView textView = (TextView) rView.findViewById (R.id.message);
 
-		textView.setText (chatData.get (position).getMessage ());
+		textView.setText (Html.fromHtml (chatData.get (position).getMessage ()));
 
 		return rView;
 	}
