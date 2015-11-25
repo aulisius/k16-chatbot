@@ -1,6 +1,7 @@
 package com.kurukshetra.k16;
 
 import android.content.Context;
+import android.content.Intent;
 import android.database.DataSetObserver;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -13,6 +14,7 @@ import android.widget.BaseAdapter;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -20,7 +22,6 @@ import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -31,7 +32,6 @@ public class MainActivity extends AppCompatActivity {
 	ChatAdapter chatAdapter;
 	ListView mListView;
 	HashMap<String, String[]> stringHashMap;
-	JSONObject eventJSON;
 	HashMap<String, String> queryType;
 
 	@Override
@@ -45,11 +45,10 @@ public class MainActivity extends AppCompatActivity {
 
 		initJSONFile ();
 
-		//JSONObject json  = new JSONObject ()
 		String[] helpStrings = new String[] {
-				"Hey! This is DexBot here to help you! <br/> You can use these commands to communicate with me<br/>",
-				"when is ___? - e.g. coding<br/>",
-				"about __? - e.g. Events <br/>",
+				"Hey! This is DexBot here to help you! <br/> You can use these commands to communicate with me <br/>",
+				"when is ___? - e.g. when coding <br/>",
+				"about __? - e.g. about categories <br/>",
 				"help - To see this help message <br/>"
 		};
 
@@ -63,62 +62,92 @@ public class MainActivity extends AppCompatActivity {
 		String help = "";
 		for (String i : temp) help = help + "\n" + i;
 
-		Message welcome = new Message ();
-		welcome.setType ("bot");
-		welcome.setMessage (help);
-
-		arrayList.add (welcome);
+		arrayList.add (new Message ("bot", help));
 
 		chatAdapter = new ChatAdapter (getApplicationContext (), arrayList);
 
 		mListView = (ListView) findViewById (R.id.chat);
 		mListView.setAdapter (chatAdapter);
+
+	}
+
+	@Override
+	protected void onPause () {
+		super.onPause ();
+		startService (new Intent (this, ChatHead.class));
+		Toast.makeText (this, "onPause()", Toast.LENGTH_SHORT).show ();
+	}
+
+	@Override
+	protected void onDestroy () {
+		super.onDestroy ();
+		Toast.makeText (this, "onDestroy()", Toast.LENGTH_SHORT).show ();
+		stopService (new Intent (this, ChatHead.class));
+	}
+
+	@Override
+	protected void onStop () {
+		super.onStop ();
+		//Toast.makeText (this, "onStop()", Toast.LENGTH_SHORT).show ();
+		//startService (new Intent (this, ChatHead.class));
+	//	stopService (new Intent (this, ChatHead.class));
+	}
+
+	@Override
+	public void onBackPressed () {
+		super.onBackPressed ();
+		//Toast.makeText (this, "onBackPressed()", Toast.LENGTH_SHORT).show ();
+		//startService (new Intent (this, ChatHead.class));
+	}
+
+	@Override
+	protected void onResume () {
+		super.onResume ();
+		Toast.makeText (this, "onResume()", Toast.LENGTH_SHORT).show ();
+		stopService (new Intent (this, ChatHead.class));
 	}
 
 	public void initJSONFile() {
 
 		try {
-			InputStream is = getAssets ().open ("events.json");
-			BufferedReader br = new BufferedReader (new InputStreamReader (is));
-			StringBuilder str = new StringBuilder ();
-			String st = "";
-			while((st = br.readLine ()) != null) {
-				str.append (st);
-			}
-			JSONObject js = new JSONObject (str.toString ());
-			JSONArray categoryJSONArray = js.getJSONArray ("events");
+			BufferedReader br = new BufferedReader (new InputStreamReader (getAssets ().open ("events.json")));
+
+			StringBuilder builder = new StringBuilder ();
+			String JSONString = "";
+			while((JSONString = br.readLine ()) != null) builder.append (JSONString);
+
+			JSONArray categoryJSONArray = new JSONObject (builder.toString ()).getJSONArray ("events");
 
 			String[] categories = new String[categoryJSONArray.length ()];
-			for(int i = 0; i < categoryJSONArray.length (); i++ ) {
-				categories[i] = categoryJSONArray.getJSONObject (i).getString ("name");
-			}
-
 
 			for(int i = 0; i < categoryJSONArray.length (); i++) {
-
+				categories[i] = categoryJSONArray.getJSONObject (i).getString ("name");
 				JSONArray tempArray = categoryJSONArray.getJSONObject (i).getJSONArray ("events");
-				ArrayList<String> eventNameList = new ArrayList<> ();
+
+				String[] eventNames = new String[tempArray.length ()];
 
 				for(int j = 0; j < tempArray.length (); j++) {
 
+					ArrayList<String> contentList = new ArrayList<> ();
 
 					JSONObject tempObject = tempArray.getJSONObject (j);
-					String key = tempObject.getString ("name").toLowerCase ();
+					eventNames[j] = tempObject.getString ("name").toLowerCase ();
 
 					JSONArray tabs = tempObject.getJSONArray ("tabs");
 
 					for(int k = 1; k < tabs.length (); k++) {
-						eventNameList.add (tabs.getJSONObject (k).getString ("title"));
-						eventNameList.add (tabs.getJSONObject (k).getString ("content"));
+						contentList.add (tabs.getJSONObject (k).getString ("title"));
+						contentList.add (tabs.getJSONObject (k).getString ("content"));
 					}
 
-					String[] description = new String[eventNameList.size ()];
-					eventNameList.toArray (description);
-					stringHashMap.put (key, description);
+					String[] description = new String[contentList.size ()];
+					contentList.toArray (description);
+					stringHashMap.put (eventNames[j], description);
 				}
+				stringHashMap.put (categories[i].toLowerCase (), eventNames);
 			}
 
-			stringHashMap.put ("events", categories);
+			stringHashMap.put ("categories", categories);
 		}
 		catch(IOException ie) {
 			Log.d ("JSONFile", "Read error");
@@ -129,26 +158,17 @@ public class MainActivity extends AppCompatActivity {
 
 	}
 	public void addChatMessage (View v) {
+
 		EditText editText = (EditText) findViewById (R.id.new_msg);
 
 		String msg = editText.getEditableText ().toString ();
-
 		editText.setText ("");
 
-		if (msg.replaceAll (" ", "").length () > 0) {
-
-			Message message = new Message ();
-			message.setType ("user");
-			message.setMessage (msg);
-			arrayList.add (message);
-
-		}
+		if (msg.replaceAll (" ", "").length () > 0)
+			arrayList.add (new Message ("user", msg));
 		else return;
 
-		Message botReply = new Message ();
-		botReply.setType ("bot");
-		botReply.setMessage ( parseMessage (msg) );
-		arrayList.add (botReply);
+		arrayList.add (new Message ("bot", parseMessage (msg)));
 
 		chatAdapter = new ChatAdapter (getApplicationContext (), arrayList);
 		mListView.setAdapter (chatAdapter);
@@ -165,7 +185,7 @@ public class MainActivity extends AppCompatActivity {
 		String messageBody = message.substring (messageType.length ()).toLowerCase ().trim ();
 
 		if (message.matches ("about(.*)")) {
-			if(stringHashMap.get (messageType) != null) {
+			if(stringHashMap.get (messageBody) != null) {
 				mesg = "";
 				String[] wordParts = stringHashMap.get (messageBody);
 				for(String i : wordParts) mesg = mesg + "<br/>" + i;
@@ -179,9 +199,10 @@ public class MainActivity extends AppCompatActivity {
 
 		return mesg;
 	}
+
+	//@Override
+	//public void onPause
 }
-
-
 
 class ChatAdapter extends BaseAdapter {
 
@@ -204,14 +225,10 @@ class ChatAdapter extends BaseAdapter {
 	}
 
 	@Override
-	public void registerDataSetObserver (DataSetObserver observer) {
-
-	}
+	public void registerDataSetObserver (DataSetObserver observer) {}
 
 	@Override
-	public void unregisterDataSetObserver (DataSetObserver observer) {
-
-	}
+	public void unregisterDataSetObserver (DataSetObserver observer) {}
 
 	@Override
 	public int getCount () {
