@@ -8,7 +8,7 @@
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
-    tools:context="com.kurukshetra.k16.MainActivity"
+    tools:context=".activities.MainActivity"
     android:background="#fff">
 
     <ListView
@@ -18,7 +18,7 @@
         android:transcriptMode="alwaysScroll"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:divider="@android:color/transparent"
+        android:divider="#fff"
         android:dividerHeight="10dp"
         android:layout_above="@+id/keyboard"
         android:layout_alignParentLeft="true"
@@ -44,7 +44,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="0.2"
-            android:background="@mipmap/send"
+            android:background="@drawable/ic_send"
             android:onClick="addChatMessage"/>
     </LinearLayout>
 

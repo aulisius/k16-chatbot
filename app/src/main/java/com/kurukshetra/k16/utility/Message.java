@@ -1,4 +1,4 @@
-package com.kurukshetra.k16;
+package com.kurukshetra.k16.utility;
 
 public class Message {
 	private String type;
@@ -6,7 +6,7 @@ public class Message {
 
 	Message() {}
 
-	Message(String type, String message) {
+	public Message (String type, String message) {
 		this.type = type;
 		this.message = message;
 	}
