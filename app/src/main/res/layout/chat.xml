@@ -6,20 +6,9 @@
     android:orientation="vertical"
     android:background="@drawable/btn_white">
 
-    <ListView
-        android:id="@+id/chat"
-        android:background="#fff"
-        android:stackFromBottom="true"
-        android:transcriptMode="alwaysScroll"
-        android:layout_width="match_parent"
-        android:layout_height="300dp"
-        android:divider="#fff"
-        android:dividerHeight="10dp"
-        />
 
     <EditText
         android:focusableInTouchMode="true"
-        android:layout_below="@id/chat"
         android:id="@+id/new_msg"
         android:layout_width="match_parent"
         android:layout_height="48dp"
@@ -29,6 +18,19 @@
         android:inputType="text"
         android:clickable="true"
         android:textColor="#000"
+        android:layout_alignParentBottom="true"
+        />
+
+    <ListView
+        android:id="@+id/chat"
+        android:background="#fff"
+        android:stackFromBottom="true"
+        android:transcriptMode="alwaysScroll"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:divider="#fff"
+        android:layout_above="@id/new_msg"
+        android:dividerHeight="10dp"
         />
 
     <Button
@@ -36,7 +38,7 @@
         android:layout_width="48dp"
         android:layout_height="48dp"
         android:layout_alignParentRight="true"
-        android:layout_below="@id/chat"
+        android:layout_alignParentBottom="true"
         android:background="@drawable/ic_send"
         />
 

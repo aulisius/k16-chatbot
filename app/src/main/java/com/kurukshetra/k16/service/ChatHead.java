@@ -4,6 +4,7 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.PixelFormat;
+import android.graphics.Point;
 import android.os.Build;
 import android.os.IBinder;
 import android.view.Gravity;
@@ -66,24 +67,20 @@ public class ChatHead extends Service {
 				ViewGroup.LayoutParams.MATCH_PARENT,
 				ViewGroup.LayoutParams.WRAP_CONTENT,
 				WindowManager.LayoutParams.TYPE_PHONE,
-				WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+				WindowManager.LayoutParams.FLAGS_CHANGED | WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN,
 				PixelFormat.TRANSLUCENT);
 
-		nparams.gravity = Gravity.TOP | Gravity.CENTER;
+		nparams.gravity = Gravity.CENTER;
 		nparams.x = 0;
-		nparams.y = 150;
+		nparams.y = 250;
 
 		windowManager.addView (chatHead, params);
-
-
-
 
 		chatHead.setOnTouchListener (new View.OnTouchListener () {
 			private int initialX;
 			private int initialY;
 			private float initialTouchX;
 			private float initialTouchY;
-
 
 			@Override
 			public boolean onTouch (View view, MotionEvent motionEvent) {
@@ -104,7 +101,8 @@ public class ChatHead extends Service {
 							windowManager.updateViewLayout (chatHead, params);
 							return true;
 						} else {
-							params.x = params.y = 0;
+							params.x = 0;
+							params.y = 100;
 							windowManager.updateViewLayout (chatHead, params);
 							return false;
 						}
@@ -151,20 +149,6 @@ public class ChatHead extends Service {
 		Button btn = (Button) mView.findViewById (R.id.btn);
 
 		EditText ed = (EditText) mView.findViewById (R.id.new_msg);
-
-		//this.get
-		//getApplicationContext ().getWindow ().setSoftInputMode (WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
-		ed.setOnClickListener (new View.OnClickListener () {
-			@Override
-			public void onClick (View v) {
-
-			}
-		});
-
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-			ed.setShowSoftInputOnFocus (true);
-		}
-
 
 		btn.setOnClickListener (new View.OnClickListener () {
 			@Override
